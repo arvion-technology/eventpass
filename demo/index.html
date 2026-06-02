@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>EventPass — ticketing and QR check-in, no dependencies</title>
+  <meta name="description" content="Sell tickets, issue QR-coded passes and check guests in at the door. The QR encoder is implemented from scratch in src/qr.js: Reed-Solomon, masking, the lot." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230b0f1a'/><text x='16' y='22' font-family='sans-serif' font-size='16' font-weight='700' fill='%23f5c26b' text-anchor='middle'>E</text></svg>" />
+  <link rel="stylesheet" href="arvion.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="aurora"></div>
+  <div class="grid-lines"></div>
+
+  <div class="app shell">
+    <aside class="sidebar">
+      <a class="brand" href="#event" style="padding:6px 8px 14px">
+        <span class="brand-mark">A</span>
+        <span>
+          <span class="brand-word">EVENT<b>PASS</b></span>
+          <span class="brand-sub" style="display:block">by Arvion</span>
+        </span>
+      </a>
+
+      <div class="nav-label">Event</div>
+      <a class="nav-item active" href="#event" data-view="event"><span class="nav-dot"></span>Event page</a>
+      <a class="nav-item" href="#passes" data-view="passes"><span class="nav-dot"></span>Passes
+        <span class="badge" id="nav-pass-count" style="margin-left:auto;padding:1px 7px">–</span></a>
+      <a class="nav-item" href="#checkin" data-view="checkin"><span class="nav-dot"></span>Check-in station</a>
+      <a class="nav-item" href="#stats" data-view="stats"><span class="nav-dot"></span>Attendance</a>
+
+      <div class="nav-label">Workspace</div>
+      <a class="nav-item" href="https://github.com/arvion-technology/eventpass#readme" target="_blank" rel="noopener"><span class="nav-dot"></span>Documentation ↗</a>
+
+      <div style="flex:1"></div>
+      <div class="card flat pad-sm" style="margin-top:14px">
+        <div class="row" style="gap:8px">
+          <span class="badge green"><span class="dot pulse"></span>offline checks</span>
+          <span class="spacer"></span>
+          <span class="small muted mono">v1.0</span>
+        </div>
+        <p class="small muted" style="margin:8px 0 0">No scanner SDK<br />No network at the door</p>
+        <button class="btn sm ghost mt-2" id="reset-data" style="width:100%">Reset demo data</button>
+      </div>
+    </aside>
+
+    <div style="min-width:0">
+      <header class="topbar">
+        <div class="row" style="gap:10px">
+          <span class="brand-word" style="letter-spacing:0.06em">Kathmandu Design Week</span>
+          <span class="badge gold" id="event-date">—</span>
+        </div>
+        <span class="spacer"></span>
+        <span class="small muted">Patan Durbar Square, Lalitpur</span>
+        <span class="badge green"><span class="dot pulse"></span>Gate A online</span>
+        <div class="avatar" title="Box office">KA</div>
+      </header>
+
+      <main class="main">
+        <!-- ============================================================ -->
+        <section data-view-panel="event">
+          <div class="page-head">
+            <div>
+              <div class="eyebrow">Kathmandu Design Week · 2083 B.S.</div>
+              <h1>Tickets</h1>
+              <p class="lede">Three tiers, one hall, 204 passes. Every pass gets a QR code generated on this page — the encoder in <span class="mono">src/qr.js</span> is written from the specification, not imported.</p>
+            </div>
+            <span class="spacer"></span>
+            <div class="row">
+              <span class="badge" id="capacity-badge">—</span>
+              <button class="btn sm" id="goto-passes">My passes →</button>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns:minmax(0,1.55fr) minmax(0,1fr)">
+            <div class="col" style="gap:12px">
+              <div class="col" style="gap:12px" id="tier-list"></div>
+              <div class="card">
+                <div class="card-head"><div class="card-title">Promo codes</div><span class="spacer"></span><span class="small muted">one use per order</span></div>
+                <div id="promo-table"></div>
+              </div>
+            </div>
+            <div class="col" style="gap:14px">
+              <div class="card" id="checkout"></div>
+              <div class="card">
+                <div class="card-head"><div class="card-title">At the door</div></div>
+                <div class="col" style="gap:9px;font-size:12px;color:var(--text-2)">
+                  <div class="row"><span class="badge gold">QR</span><span>Model 2, byte mode, versions 1–10, all four EC levels</span></div>
+                  <div class="row"><span class="badge blue">code</span><span>Readable fallback with a two-character checksum</span></div>
+                  <div class="row"><span class="badge green">once</span><span>Duplicate scans are refused, with the original time</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <section data-view-panel="passes" hidden>
+          <div class="page-head">
+            <div>
+              <div class="eyebrow">Issued passes</div>
+              <h1>Your passes</h1>
+              <p class="lede">Each pass is a QR code plus a human-readable code. The checksum catches typos before the door has to.</p>
+            </div>
+            <span class="spacer"></span>
+            <span class="badge mono" id="pass-count">—</span>
+          </div>
+
+          <div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1.5fr)">
+            <div class="card pass-sheet" id="pass-large"></div>
+            <div class="card">
+              <div class="card-head"><div class="card-title">Issued</div><span class="spacer"></span><span class="small muted">click to preview</span></div>
+              <div class="pass-list" id="pass-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <section data-view-panel="checkin" hidden>
+          <div class="page-head">
+            <div>
+              <div class="eyebrow">Gate A · doors 10:00</div>
+              <h1>Check-in station</h1>
+              <p class="lede">Type a code or scan the next pass. The station validates the checksum, then the pass list, then whether the pass has already come through this door.</p>
+            </div>
+            <span class="spacer"></span>
+            <span class="badge" id="station-clock"><span class="dot pulse" style="color:var(--green)"></span><span class="mono">--:--</span></span>
+          </div>
+
+          <div class="grid grid-4" id="ci-kpis" style="margin-bottom:14px"></div>
+
+          <div class="grid" style="grid-template-columns:minmax(0,1.45fr) minmax(0,1fr)">
+            <div class="col" style="gap:14px">
+              <div class="card">
+                <div class="card-head"><div class="card-title">Scan or type a code</div><span class="spacer"></span><span class="small muted">checksum first</span></div>
+                <div class="row" style="gap:8px">
+                  <input class="input mono" id="ci-input" placeholder="EV26-GA-0007-XX" aria-label="Pass code" style="flex:1;letter-spacing:0.04em" />
+                  <button class="btn primary" id="ci-submit">Check in</button>
+                </div>
+                <div class="row wrap mt-2" style="gap:8px">
+                  <button class="btn sm" id="ci-scan-next">Scan next pass</button>
+                  <button class="btn sm" id="ci-duplicate">Scan a duplicate</button>
+                  <button class="btn sm ghost" id="ci-typo">Scan a mistyped code</button>
+                </div>
+                <div id="ci-result" style="margin-top:12px"></div>
+              </div>
+              <div class="card pad-sm" style="padding:0">
+                <div class="card-head" style="padding:14px 16px 6px"><div class="card-title">Door log</div><span class="spacer"></span><span class="small muted" id="ci-log-count">—</span></div>
+                <div id="ci-feed"></div>
+              </div>
+            </div>
+            <div class="col" style="gap:14px">
+              <div class="card">
+                <div class="card-head"><div class="card-title">Next through the door</div><span class="spacer"></span><span class="badge gold" id="ci-preview-tier">—</span></div>
+                <div id="ci-preview"></div>
+              </div>
+              <div class="card">
+                <div class="card-head"><div class="card-title">By tier</div></div>
+                <div id="ci-stats"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <section data-view-panel="stats" hidden>
+          <div class="page-head">
+            <div>
+              <div class="eyebrow">Attendance</div>
+              <h1>How the night went</h1>
+              <p class="lede">Revenue is what was actually paid after promo codes. Attendance is passes scanned divided by passes issued.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-4" id="stats-kpis" style="margin-bottom:14px"></div>
+
+          <div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);margin-bottom:14px">
+            <div class="card">
+              <div class="card-head"><div class="card-title">Revenue by tier</div><span class="spacer"></span><span class="small muted">paid, not list</span></div>
+              <div id="revenue-tiers"></div>
+            </div>
+            <div class="card">
+              <div class="card-head"><div class="card-title">Arrivals</div><div class="card-sub">cumulative check-ins by hour</div></div>
+              <div id="arrivals-chart"></div>
+            </div>
+          </div>
+
+          <div class="card pad-sm" style="padding:0">
+            <div class="card-head" style="padding:14px 16px 6px"><div class="card-title">Not yet arrived</div><span class="spacer"></span><span class="badge mono" id="noshow-count">—</span></div>
+            <div id="noshow-table"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="demo-banner">
+    <span class="brand-mark" style="width:20px;height:20px;font-size:10px;border-radius:6px">A</span>
+    <span>Arvion Labs</span>
+    <span class="sep"></span>
+    <a href="https://arvion-technology.github.io/labs/">All projects</a>
+    <span class="sep"></span>
+    <a href="https://github.com/arvion-technology/eventpass" target="_blank" rel="noopener">source</a>
+  </div>
+
+  <script src="arvion.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
