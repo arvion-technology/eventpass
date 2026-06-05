@@ -1,0 +1,41 @@
+[
+  {
+    "wait": 1000
+  },
+  {
+    "hash": "#checkin"
+  },
+  {
+    "wait": 1000
+  },
+  {
+    "scroll": 260
+  },
+  {
+    "wait": 600
+  },
+  {
+    "click": "#ci-scan-next"
+  },
+  {
+    "wait": 800
+  },
+  {
+    "scroll": 180
+  },
+  {
+    "wait": 500
+  },
+  {
+    "scroll": 300
+  },
+  {
+    "wait": 700
+  },
+  {
+    "scroll": -200
+  },
+  {
+    "wait": 600
+  }
+]
