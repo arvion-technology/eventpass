@@ -2,12 +2,12 @@
 <img src="docs/demo.gif" alt="EventPass ticket tiers and checkout" width="100%" />
 </div>
 
-<sub>Recorded from the live demo — <a href="docs/demo.mp4">MP4</a> · <a href="docs/screenshot.png">static frame</a></sub>
+<sub>Recorded from the live demo, <a href="docs/demo.mp4">MP4</a> · <a href="docs/screenshot.png">static frame</a></sub>
 
 # EventPass
 
 A ticketing page, a QR pass and a door station. Tiers, promo codes, attendance
-stats — and a QR Code Model 2 encoder written from the specification, so the
+stats, and a QR Code Model 2 encoder written from the specification, so the
 demo ships no scanner SDK, no font and no network call at the gate.
 
 [**Open the live demo**](https://arvion-technology.github.io/labs/demos/eventpass/demo/) · [CI](https://github.com/arvion-technology/eventpass/actions/workflows/ci.yml) · [MIT](LICENSE)
@@ -19,7 +19,7 @@ a repository whose point is showing how we build: the interesting part is the
 encoding, not the `import`. So `src/qr.js` implements Galois-field arithmetic,
 Reed-Solomon error correction, block interleaving, the function patterns, the
 zig-zag data placement, all eight masks and the four penalty rules. The demo is
-the proof it works — each pass on the page is a real, scannable QR symbol.
+the proof it works, each pass on the page is a real, scannable QR symbol.
 
 The rest is deliberately ordinary: three tiers with capacity, three promo codes,
 pass codes with a typo checksum, and a check-in station that refuses a second
@@ -27,17 +27,17 @@ scan and says when the first one happened.
 
 ## What it does
 
-- **Event page** — three tiers with live capacity, a quantity stepper, promo
+- **Event page**: three tiers with live capacity, a quantity stepper, promo
   codes and a price breakdown before anything is issued. Issuing creates passes
   with QR codes; there is no payment step.
-- **Passes** — one large QR per pass, a printable PNG download, and the list of
+- **Passes**: one large QR per pass, a printable PNG download, and the list of
   everything issued with its scan status.
-- **Check-in station** — type a code or use "scan next pass". The station checks
+- **Check-in station**: type a code or use "scan next pass". The station checks
   the code format and checksum, then the pass list, then whether the pass has
   already been through the door. A door log keeps every attempt.
-- **Attendance** — revenue actually paid, attendance rate, no-show list, revenue
+- **Attendance**: revenue actually paid, attendance rate, no-show list, revenue
   by tier and a cumulative arrivals curve.
-- **Reset** — rebuilds the seeded gate state, discarding local scans and sales.
+- **Reset**: rebuilds the seeded gate state, discarding local scans and sales.
 
 Ticket sales and check-ins are kept in `localStorage`, so a refresh at the door
 does not lose the last scans.
@@ -84,19 +84,19 @@ mode accepts any UTF-8 string.
 
 The pipeline, in `encodeQR`:
 
-1. **Encode** — mode indicator `0100`, a character count (8 bits below version
+1. **Encode**: mode indicator `0100`, a character count (8 bits below version
    10, 16 above), then the UTF-8 bytes. Terminator, byte alignment and the
    `0xEC / 0x11` pad codewords fill the version's data capacity.
-2. **Split and protect** — data codewords are split into the block structure for
+2. **Split and protect**: data codewords are split into the block structure for
    that version and level; each block gets Reed-Solomon codewords computed over
    GF(256) with primitive polynomial `0x11D`.
-3. **Interleave** — data codewords are taken round-robin across blocks, then the
+3. **Interleave**: data codewords are taken round-robin across blocks, then the
    error-correction codewords, then the version's remainder bits.
-4. **Draw** — finder patterns and separators, timing patterns, alignment
+4. **Draw**: finder patterns and separators, timing patterns, alignment
    patterns, format-info areas, version-info areas for version 7 and up, and the
    always-dark module. Data goes in the two-column zig-zag from the bottom right,
    skipping the vertical timing column.
-5. **Mask** — all eight masks are applied to a copy, the four penalty rules
+5. **Mask**: all eight masks are applied to a copy, the four penalty rules
    (runs, 2×2 blocks, finder-like patterns, dark proportion) are scored, and the
    lowest score wins unless a mask is passed explicitly.
 
@@ -113,7 +113,7 @@ event tier sequence checksum
 ```
 
 The checksum is two base-36 characters over the event, tier and sequence. It is
-not a signature — it catches a mistyped digit, not a determined forger. The
+not a signature, it catches a mistyped digit, not a determined forger. The
 station verifies it before it looks anything up, so a typo gets a different
 message from a code that was never issued.
 
@@ -143,7 +143,7 @@ byteCapacity(1, "M"); // 14 bytes
 ```
 
 Drawing is the caller's job: the demo maps `modules[row][col]` to canvas
-rectangles with a four-module quiet zone. Nothing else is required — the QR
+rectangles with a four-module quiet zone. Nothing else is required, the QR
 specification does not care about pixels.
 
 ## Tests
@@ -158,7 +158,7 @@ The QR suite uses checks that do not believe the encoder: GF(256) inverses,
 Reed-Solomon generator shape, the worked `01234567` example from ISO 18004, a
 syndrome check that every generated codeword evaluates to zero at the generator
 roots, the published fifteen-bit format strings and eighteen-bit version strings,
-capacity numbers for versions 1–10, finder and timing patterns, both copies of
+capacity numbers for versions 1-10, finder and timing patterns, both copies of
 the version information, the count of data modules against codewords plus
 remainder bits, an unmask-and-re-read round trip that recovers the codeword
 stream from the matrix, and a check that the chosen mask really is the lowest
@@ -181,11 +181,11 @@ node scripts/serve-check.mjs
 The station has no camera decoder: in a real deployment a hardware scanner or
 `BarcodeDetector` would hand it a string, and the demo's input stands in for
 that. Pass codes are checksummed, not signed, so someone who understands the
-format can invent a code for a pass that was never issued — the pass list lookup
+format can invent a code for a pass that was never issued, the pass list lookup
 is the only defence. There is no backend, no authentication, no payment
 integration and no refund flow; orders exist only in the browser.
 
-The encoder supports byte mode, versions 1–10 and automatic masking. It does not
+The encoder supports byte mode, versions 1-10 and automatic masking. It does not
 implement numeric or alphanumeric modes, Kanji mode, micro QR, Structured Append
 or ECI, and it does not read symbols. Error-correction level is the caller's
 choice; the demo uses M everywhere. The event date is set to the day the page is

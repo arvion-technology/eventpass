@@ -1,4 +1,4 @@
-// EventPass demo — rendering and interaction.
+// EventPass demo, rendering and interaction.
 // The QR encoder is ../src/qr.js; ticket and promo rules are ../src/tickets.js;
 // the door logic is ../src/checkin.js. This file draws and wires them together.
 import { encodeQR } from "../src/qr.js";
@@ -222,7 +222,7 @@ function renderEvent() {
       onclick: buy,
       text: priced.ok ? `Issue ${state.qty} pass${state.qty === 1 ? "" : "es"}` : "Not available",
     }),
-    el("p", { class: "small muted center", style: "margin:8px 0 0", text: "Demo checkout — no card, no account." }),
+    el("p", { class: "small muted center", style: "margin:8px 0 0", text: "Demo checkout, no card, no account." }),
   ].filter(Boolean));
 
   $("#promo-table").replaceChildren(A.dataTable({
@@ -321,7 +321,7 @@ function renderCheckin() {
   );
 
   const pass = previewPass();
-  $("#ci-preview-tier").textContent = pass ? tierById(pass.tierId)?.name ?? pass.tierId : "—";
+  $("#ci-preview-tier").textContent = pass ? tierById(pass.tierId)?.name ?? pass.tierId : ", ";
   $("#ci-preview").replaceChildren(...(pass ? [
     qrCanvas(pass.code, 152),
     el("div", { class: "pass-holder", style: "font-size:14px", text: pass.holder }),
@@ -334,7 +334,7 @@ function renderCheckin() {
   $("#ci-feed").replaceChildren(...(feed.length ? feed.map((entry) => el("div", { class: "feed-row" },
     el("span", { class: "mono small muted", text: new Date(entry.ts).toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" }) }),
     statusBadge(entry.status),
-    el("span", { class: "holder", text: entry.holder ?? "—" }),
+    el("span", { class: "holder", text: entry.holder ?? ", " }),
     el("span", { class: "code", text: entry.code }))) : [el("p", { class: "small muted", style: "padding:12px 16px", text: "No scans yet." })]));
 
   $("#ci-stats").replaceChildren(A.barList({

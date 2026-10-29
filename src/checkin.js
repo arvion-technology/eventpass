@@ -36,7 +36,7 @@ export function checkIn(rawCode, passes, { now = Date.now(), station = "Gate A" 
     return {
       ok: false,
       status: CHECK_IN_STATUS.INVALID,
-      message: verified.reason === "checksum" ? "That code looks mistyped — check the last two characters." : "That is not an EventPass code.",
+      message: verified.reason === "checksum" ? "That code looks mistyped, check the last two characters." : "That is not an EventPass code.",
       pass: null, updatedPass: null, at: null, previousAt: null,
     };
   }
@@ -52,7 +52,7 @@ export function checkIn(rawCode, passes, { now = Date.now(), station = "Gate A" 
     return {
       ok: false,
       status: CHECK_IN_STATUS.DUPLICATE,
-      message: `${pass.holder} is already inside — first scanned at ${new Date(pass.checkedInAt).toISOString().slice(11, 16)}.`,
+      message: `${pass.holder} is already inside, first scanned at ${new Date(pass.checkedInAt).toISOString().slice(11, 16)}.`,
       pass,
       updatedPass: null,
       at: null,

@@ -135,7 +135,7 @@ export function revenueByTier(passes) {
 
 /**
  * Validate a promo against one order. Returns the discount or a reason.
- * A promo use is counted per order, not per pass — one code, one order.
+ * A promo use is counted per order, not per pass, one code, one order.
  */
 export function validatePromo(promo, { tierId, qty, subtotal, now = Date.now() } = {}) {
   if (!promo) return { ok: false, error: "Unknown promo code", discount: 0 };
